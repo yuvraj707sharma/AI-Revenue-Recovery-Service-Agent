@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: razorpay_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: razorpay_recovery
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: razorpay_backend
+    restart: always
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=mysql+pymysql://root:password@mysql:3306/razorpay_recovery
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-rzp_test_AiRecoveryDemoKey}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-AiRecoverySecretDemoVal12345}
+      - WHATSAPP_PROVIDER=mock
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: razorpay_frontend
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
