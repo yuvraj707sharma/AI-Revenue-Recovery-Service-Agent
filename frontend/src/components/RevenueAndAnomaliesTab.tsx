@@ -2,17 +2,20 @@
 
 import React from 'react';
 import { ShieldCheck, AlertCircle, CheckCircle2, TrendingUp, Radio } from 'lucide-react';
-import { EvaluationReport, AnomalyItem } from '@/lib/api';
+import { EvaluationReport, AnomalyItem, AnalyticsTrends } from '@/lib/api';
+import { VisualAnalyticsCharts } from './VisualAnalyticsCharts';
 
 interface RevenueAndAnomaliesTabProps {
   report: EvaluationReport | null;
   anomalies: AnomalyItem[];
+  trends?: AnalyticsTrends;
   loading: boolean;
 }
 
 export const RevenueAndAnomaliesTab: React.FC<RevenueAndAnomaliesTabProps> = ({
   report,
   anomalies,
+  trends,
   loading,
 }) => {
   const atRiskAmount = report?.financials.amount_attempted || 0;
@@ -73,50 +76,60 @@ export const RevenueAndAnomaliesTab: React.FC<RevenueAndAnomaliesTabProps> = ({
         </div>
       </div>
 
-      {/* 2. Anomaly Radar Panel (Cross-Merchant Real-Time Intelligence) */}
+      {/* 2. Visual Recovery Analytics & Bank-Wise Health Charts */}
+      <VisualAnalyticsCharts trends={trends} />
+
+      {/* 3. Cross-Merchant Anomaly Radar Panel */}
       <div className="p-4 rounded bg-[#0a0a0a] border border-[#1f1f1f] space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-blue-400 animate-pulse" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            <Radio className="w-4 h-4 text-blue-500 animate-pulse" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">
               Cross-Merchant Anomaly Radar
-            </h3>
+            </h2>
           </div>
-          <span className="text-[10px] font-mono text-[#888888] px-2 py-0.5 rounded bg-[#111111] border border-[#222222]">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161616] text-[#888888] border border-[#2a2a2a]">
             Native Real-Time Feed
           </span>
         </div>
 
-        <p className="text-xs text-[#888888]">
+        <p className="text-xs text-[#888888] leading-relaxed">
           Because Razorpay operates across thousands of merchants simultaneously, the Copilot detects issuer switch outages and card-rail degradations in real time—automatically holding retries before customers get spammed.
         </p>
 
-        <div className="space-y-2.5 pt-1">
+        <div className="space-y-2 pt-1">
           {anomalies.map((anom) => (
             <div
               key={anom.id}
               className={`p-3 rounded border text-xs ${
                 anom.status === 'degraded'
-                  ? 'bg-[#111111] border-blue-900/60 text-white'
-                  : 'bg-[#0f0f0f] border-[#222222] text-[#cccccc]'
+                  ? 'bg-[#121212] border-blue-900/40'
+                  : 'bg-[#0f0f0f] border-[#222222]'
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white">{anom.bank}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#1a1a1a] text-[#888888]">
+                    <span className="font-bold text-white uppercase">{anom.bank}</span>
+                    <span className="text-[10px] font-mono text-[#888888]">
                       {anom.rail}
                     </span>
-                    {anom.status === 'degraded' && (
-                      <span className="text-[10px] font-mono text-blue-400 font-bold">
+                    {anom.status === 'degraded' ? (
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-950 text-blue-300 border border-blue-800">
                         +{anom.failure_spike_pct}% Failure Spike Across {anom.merchants_impacted} Merchants
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#1c1c1c] text-[#888888]">
+                        Optimal Clearing
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-white">{anom.headline}</div>
-                  <div className="text-[11px] text-[#888888] font-mono">
-                    ↳ Action Taken: {anom.action_taken}
+
+                  <p className="text-xs text-[#cccccc] font-mono">{anom.headline}</p>
+
+                  <div className="flex items-center gap-1.5 text-[11px] text-blue-400 font-mono">
+                    <span>↳ Action Taken:</span>
+                    <span>{anom.action_taken}</span>
                   </div>
                 </div>
 
@@ -129,7 +142,7 @@ export const RevenueAndAnomaliesTab: React.FC<RevenueAndAnomaliesTabProps> = ({
         </div>
       </div>
 
-      {/* 3. Recovery by Tier (Plain Merchant Language) */}
+      {/* 4. Recovery by Tier (Plain Merchant Language) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="p-4 rounded bg-[#0a0a0a] border border-[#1f1f1f] space-y-2">
           <div className="flex items-center justify-between">

@@ -7,12 +7,14 @@ import { AgentActivityTab } from '@/components/AgentActivityTab';
 import { SettingsAndAuditTab } from '@/components/SettingsAndAuditTab';
 import { WhatsAppSimulatorModal } from '@/components/WhatsAppSimulatorModal';
 import { EvaluationReportModal } from '@/components/EvaluationReportModal';
+import { CopilotChatDrawer } from '@/components/CopilotChatDrawer';
 import {
   fetchEvaluationReport,
   fetchRecoveryEvents,
   fetchLiveAnomalies,
   fetchMerchantPolicy,
   fetchDemoScenarios,
+  fetchAnalyticsTrends,
   runSyntheticBatch,
   runDemoScenario,
   clearAuditLogs,
@@ -22,6 +24,7 @@ import {
   MerchantPolicy,
   DemoScenarioItem,
   PipelineTraceResponse,
+  AnalyticsTrends,
 } from '@/lib/api';
 
 export default function MerchantCockpitPage() {
@@ -30,6 +33,7 @@ export default function MerchantCockpitPage() {
   const [events, setEvents] = useState<RecoveryEventItem[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([]);
   const [scenarios, setScenarios] = useState<DemoScenarioItem[]>([]);
+  const [trends, setTrends] = useState<AnalyticsTrends | undefined>(undefined);
   const [policy, setPolicy] = useState<MerchantPolicy>({
     execution_mode: 'autonomous',
     max_retry_attempts: 3,
@@ -44,9 +48,10 @@ export default function MerchantCockpitPage() {
   const [lastTrace, setLastTrace] = useState<PipelineTraceResponse | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Modals
+  // Modals & Drawers
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [isCopilotChatOpen, setIsCopilotChatOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -56,31 +61,35 @@ export default function MerchantCockpitPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [reportRes, eventsRes, anomRes, policyRes, scenRes] = await Promise.all([
+      const [reportRes, eventsRes, anomRes, policyRes, scenRes, trendsRes] = await Promise.all([
         fetchEvaluationReport(),
-        fetchRecoveryEvents({ limit: 150 }),
+        fetchRecoveryEvents({ limit: 200 }),
         fetchLiveAnomalies(),
         fetchMerchantPolicy(),
         fetchDemoScenarios(),
+        fetchAnalyticsTrends(),
       ]);
 
       if (reportRes.success && reportRes.report) {
         setReport(reportRes.report);
       }
-      if (eventsRes.success && eventsRes.events) {
+      if (eventsRes.success) {
         setEvents(eventsRes.events);
       }
-      if (anomRes.success && anomRes.anomalies) {
+      if (anomRes.success) {
         setAnomalies(anomRes.anomalies);
       }
-      if (policyRes.success && policyRes.policy) {
+      if (policyRes.success) {
         setPolicy(policyRes.policy);
       }
-      if (scenRes.success && scenRes.scenarios) {
+      if (scenRes.success) {
         setScenarios(scenRes.scenarios);
       }
-    } catch (e) {
-      console.error('Error loading dashboard data:', e);
+      if (trendsRes.success && trendsRes.trends) {
+        setTrends(trendsRes.trends);
+      }
+    } catch (err) {
+      console.error('Failed to load merchant cockpit data:', err);
     } finally {
       setLoading(false);
     }
@@ -88,21 +97,22 @@ export default function MerchantCockpitPage() {
 
   useEffect(() => {
     loadData();
+    const interval = setInterval(loadData, 20000); // Live polling every 20s
+    return () => clearInterval(interval);
   }, []);
 
   const handleRunScenario = async (scenarioId: string) => {
     setIsProcessing(true);
     setActiveScenario(scenarioId);
+    setLastTrace(null);
     try {
       const res = await runDemoScenario(scenarioId);
-      if (res.success) {
-        setLastTrace(res);
-        showToast(`Executed ${scenarioId}`);
-        await loadData();
-      }
-    } catch (e) {
-      console.error('Error running scenario:', e);
-      showToast('Error running scenario.');
+      setLastTrace(res);
+      showToast(`Scenario executed: ${res.trace['5_execute'].outcome.toUpperCase()}`);
+      await loadData();
+    } catch (err) {
+      console.error('Scenario execution failed:', err);
+      showToast('Error executing scenario');
     } finally {
       setIsProcessing(false);
     }
@@ -110,64 +120,62 @@ export default function MerchantCockpitPage() {
 
   const handleRunFullBatch = async () => {
     setIsProcessing(true);
+    showToast('Ingesting & recovering 75 synthetic subscription failures...');
     try {
-      showToast('Running 75-invoice simulation batch...');
-      const res = await runSyntheticBatch(75, true);
-      if (res.success) {
-        showToast(`Processed ${res.total_processed} invoices through 6-stage pipeline.`);
-        await loadData();
-      }
-    } catch (e) {
-      console.error('Error running batch:', e);
-      showToast('Error running batch simulation.');
+      await runSyntheticBatch(75, true);
+      showToast('75-event batch recovered successfully with idempotency guarantees.');
+      await loadData();
+    } catch (err) {
+      console.error('Batch generation failed:', err);
+      showToast('Error running synthetic batch');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleClearLogs = async () => {
-    if (!confirm('Reset all audit logs for a clean demonstration run?')) return;
+    if (!confirm('Clear all recovery event logs and reset demo state?')) return;
     setIsProcessing(true);
     try {
       await clearAuditLogs();
-      setLastTrace(null);
-      setActiveScenario(null);
       showToast('Audit records cleared.');
       await loadData();
-    } catch (e) {
-      console.error('Error clearing logs:', e);
+    } catch (err) {
+      console.error('Failed to clear logs:', err);
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#000000] text-white selection:bg-blue-600 selection:text-white">
-      {/* Minimal Header with 3 Tab Selectors */}
+    <div className="min-h-screen bg-[#000000] text-white flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+      {/* Top Header & Navigation */}
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onRefresh={loadData}
         onOpenReport={() => setIsReportOpen(true)}
+        onOpenCopilotChat={() => setIsCopilotChatOpen(true)}
         isProcessing={loading || isProcessing}
-        totalInvoices={events.length}
+        totalInvoices={report?.valid_events_count || 0}
       />
 
-      {/* Main Content */}
-      <main className="max-w-7xl w-full mx-auto px-6 py-6 space-y-4 flex-1">
-        {/* Toast */}
-        {toastMessage && (
-          <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded bg-[#111111] border border-blue-500 shadow-2xl text-xs font-mono text-white flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-            <span>{toastMessage}</span>
-          </div>
-        )}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded bg-blue-600 text-white text-xs font-mono shadow-2xl border border-blue-400 flex items-center gap-2 animate-bounce">
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-        {/* Tab 1: Revenue & Anomalies (Default View) */}
+      {/* Main Tab Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+        {/* Tab 1: Revenue & Anomalies (With Visual Charts) */}
         {activeTab === 'revenue' && (
           <RevenueAndAnomaliesTab
             report={report}
             anomalies={anomalies}
+            trends={trends}
             loading={loading}
           />
         )}
@@ -175,8 +183,8 @@ export default function MerchantCockpitPage() {
         {/* Tab 2: Agent Activity & Demo */}
         {activeTab === 'activity' && (
           <AgentActivityTab
-            scenarios={scenarios}
             events={events}
+            scenarios={scenarios}
             onRunScenario={handleRunScenario}
             onRunBatch={handleRunFullBatch}
             onClearLogs={handleClearLogs}
@@ -219,6 +227,12 @@ export default function MerchantCockpitPage() {
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
         report={report}
+      />
+
+      {/* AI Financial Copilot Chat Drawer */}
+      <CopilotChatDrawer
+        isOpen={isCopilotChatOpen}
+        onClose={() => setIsCopilotChatOpen(false)}
       />
     </div>
   );

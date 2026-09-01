@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { RefreshCw, BarChart3, ShieldCheck } from 'lucide-react';
+import { RefreshCw, BarChart3, ShieldCheck, Sparkles, MessageSquare } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'revenue' | 'activity' | 'settings';
   onTabChange: (tab: 'revenue' | 'activity' | 'settings') => void;
   onRefresh: () => void;
   onOpenReport: () => void;
+  onOpenCopilotChat: () => void;
   isProcessing: boolean;
   totalInvoices: number;
 }
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
   onRefresh,
   onOpenReport,
+  onOpenCopilotChat,
   isProcessing,
   totalInvoices,
 }) => {
@@ -79,6 +81,15 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Actions */}
         <div className="flex items-center gap-2.5">
+          {/* Ask AI Copilot Button */}
+          <button
+            onClick={onOpenCopilotChat}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+            <span>Ask Copilot</span>
+          </button>
+
           {/* Live Network Status Indicator */}
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#111111] border border-[#222222] text-[11px] font-mono text-[#888888]">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
