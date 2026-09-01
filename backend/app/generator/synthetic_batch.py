@@ -11,10 +11,20 @@ from app.pipeline.diagnose import (
     ALL_ROOT_CAUSES
 )
 
-FIRST_NAMES = ["Aarav", "Ananya", "Rohan", "Priya", "Vikram", "Neha", "Rahul", "Sneha", "Aditya", "Pooja", "Arjun", "Divya", "Siddharth", "Kavya", "Karan", "Ishaan", "Meera", "Varun", "Tanvi", "Sanjay", "Deepak", "Anjali", "Gaurav", "Simran", "Rakesh"]
-LAST_NAMES = ["Sharma", "Verma", "Patel", "Reddy", "Mehta", "Iyer", "Nair", "Deshmukh", "Chopra", "Gupta", "Malhotra", "Kulkarni", "Bhatt", "Singhania", "Mukherjee", "Rao", "Joshi", "Das"]
+FIRST_NAMES = [
+    "Aarav", "Ananya", "Rohan", "Priya", "Vikram", "Neha", "Rahul", "Sneha", 
+    "Aditya", "Pooja", "Arjun", "Divya", "Siddharth", "Kavya", "Karan", "Ishaan", 
+    "Meera", "Varun", "Tanvi", "Sanjay", "Deepak", "Anjali", "Gaurav", "Simran", 
+    "Rakesh", "Abhishek", "Pallavi", "Nikhil", "Shreya", "Manish"
+]
+LAST_NAMES = [
+    "Sharma", "Verma", "Patel", "Reddy", "Mehta", "Iyer", "Nair", "Deshmukh", 
+    "Chopra", "Gupta", "Malhotra", "Kulkarni", "Bhatt", "Singhania", "Mukherjee", 
+    "Rao", "Joshi", "Das", "Saxena", "Bansal", "Kapoor", "Choudhury"
+]
 BANKS = ["HDFC", "ICICI", "SBIN", "AXIS", "KKBK", "PUNB", "YESB", "IDFC", "BOB"]
 CARD_NETWORKS = ["Visa", "MasterCard", "RuPay"]
+MERCHANTS = ["Khatabook Pro", "Zoho One Enterprise", "Freshdesk Growth", "Classplus Sub", "Postman Enterprise", "CleverTap Scale"]
 
 # Explicit templates for clear signals
 CLEAR_TEMPLATES = {
@@ -154,8 +164,8 @@ NOISY_TEMPLATES = [
 
 def get_named_demo_scenarios() -> List[Dict[str, Any]]:
     """
-    Returns the 5 mandatory, explicitly seeded demo scenarios.
-    These are clean and unambiguous to guarantee reliable live judge demonstrations.
+    Returns the 8 mandatory, explicitly seeded enterprise demo scenarios.
+    These are clean and unambiguous to guarantee reliable live demonstrations.
     """
     base_time = datetime.utcnow() - timedelta(hours=2)
 
@@ -168,6 +178,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "order_id": "order_demo_inflow_01",
             "payment_id": "pay_demo_fail_01",
             "subscription_id": "sub_pro_monthly_01",
+            "merchant_name": "Khatabook Pro",
             "amount": 1499.00,
             "currency": "INR",
             "error_code": "BAD_REQUEST_ERROR",
@@ -184,7 +195,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "expected_tier": 1,
             "expected_outcome": "recovered",
             "simulate_reply": None,
-            "scenario_notes": "Scenario 1: Insufficient funds on monthly cycle -> Tier 1 zero-click smart retry succeeds without disturbing customer."
+            "scenario_notes": "Demo #1: Insufficient funds on monthly billing -> Tier 1 zero-click smart retry scheduled on salary date; succeeds without disturbing customer."
         },
         {
             "event_id": "demo_scenario_2_zero_click_timeout",
@@ -194,6 +205,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "order_id": "order_demo_switch_02",
             "payment_id": "pay_demo_fail_02",
             "subscription_id": "sub_enterprise_02",
+            "merchant_name": "Zoho One Enterprise",
             "amount": 4999.00,
             "currency": "INR",
             "error_code": "GATEWAY_ERROR",
@@ -210,7 +222,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "expected_tier": 1,
             "expected_outcome": "recovered",
             "simulate_reply": None,
-            "scenario_notes": "Scenario 2: Gateway/bank switch timeout -> Tier 1 zero-click smart retry with jitter succeeds seamlessly."
+            "scenario_notes": "Demo #2: Gateway/bank switch timeout -> Tier 1 zero-click smart retry with jitter succeeds seamlessly."
         },
         {
             "event_id": "demo_scenario_3_tier2_expired_card",
@@ -220,6 +232,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "order_id": "order_demo_card_03",
             "payment_id": "pay_demo_fail_03",
             "subscription_id": "sub_growth_03",
+            "merchant_name": "Freshdesk Growth",
             "amount": 2499.00,
             "currency": "INR",
             "error_code": "BAD_REQUEST_ERROR",
@@ -236,7 +249,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "expected_tier": 2,
             "expected_outcome": "recovered",
             "simulate_reply": True,
-            "scenario_notes": "Scenario 3: Expired card -> Tier 2 verified WhatsApp message sent with order ref & masked card. Customer replies YES -> recovered."
+            "scenario_notes": "Demo #3: Expired card -> Tier 2 verified WhatsApp message sent with order ref & masked card. Customer replies YES -> recovered."
         },
         {
             "event_id": "demo_scenario_4_bounded_no_response",
@@ -246,6 +259,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "order_id": "order_demo_mandate_04",
             "payment_id": "pay_demo_fail_04",
             "subscription_id": "sub_custom_tier_04",
+            "merchant_name": "Postman Enterprise",
             "amount": 18500.00,
             "currency": "INR",
             "error_code": "BAD_REQUEST_ERROR",
@@ -262,7 +276,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "expected_tier": 2,
             "expected_outcome": "unrecovered",
             "simulate_reply": False,
-            "scenario_notes": "Scenario 4: Mandate limit exceeded -> Tier 2 message sent, no response, stopping rule MAX_ATTEMPTS_EXCEEDED fires -> logged as unrecovered."
+            "scenario_notes": "Demo #4: Mandate limit exceeded -> Tier 2 message sent, no response, stopping rule MAX_ATTEMPTS_EXCEEDED fires -> logged as unrecovered."
         },
         {
             "event_id": "demo_scenario_5_safety_refusal",
@@ -272,6 +286,7 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "order_id": "order_demo_risk_05",
             "payment_id": "pay_demo_fail_05",
             "subscription_id": "sub_suspicious_05",
+            "merchant_name": "Acme API Platform",
             "amount": 9999.00,
             "currency": "INR",
             "error_code": "BAD_REQUEST_ERROR",
@@ -288,17 +303,99 @@ def get_named_demo_scenarios() -> List[Dict[str, Any]]:
             "expected_tier": 3,
             "expected_outcome": "refused",
             "simulate_reply": None,
-            "scenario_notes": "Scenario 5: Suspected fraud / flagged card -> Safety Gate fires, auto-retry refused, routed to Tier 3 human desk with explainable audit log."
+            "scenario_notes": "Demo #5: Suspected fraud / flagged card -> Safety Gate fires, auto-retry refused, routed to Tier 3 human desk with explainable audit log."
+        },
+        {
+            "event_id": "demo_scenario_6_upiautopay_switch_lag",
+            "customer_ref": "cust_demo_aditya_06",
+            "customer_name": "Aditya Mukherjee",
+            "customer_phone": "+919866778899",
+            "order_id": "order_demo_upi_06",
+            "payment_id": "pay_demo_fail_06",
+            "subscription_id": "sub_classplus_06",
+            "merchant_name": "Classplus Sub",
+            "amount": 999.00,
+            "currency": "INR",
+            "error_code": "GATEWAY_ERROR",
+            "error_description": "NPCI UPI AutoPay Switch latency exceeded timeout limit on clearing node.",
+            "error_reason": "upi_switch_latency",
+            "error_source": "gateway",
+            "error_step": "payment_authorization",
+            "card_last4": "UPI",
+            "card_network": "RuPay",
+            "issuer_bank": "SBIN",
+            "attempt_count": 1,
+            "ground_truth_cause": CAUSE_BANK_TIMEOUT,
+            "detected_at": (base_time + timedelta(minutes=30)).isoformat(),
+            "expected_tier": 1,
+            "expected_outcome": "recovered",
+            "simulate_reply": None,
+            "scenario_notes": "Demo #6: NPCI UPI AutoPay switch latency -> Tier 1 zero-click smart retry with bank switch recovery backoff captures ₹999 silently."
+        },
+        {
+            "event_id": "demo_scenario_7_mandate_revoked_by_customer",
+            "customer_ref": "cust_demo_tanvi_07",
+            "customer_name": "Tanvi Kulkarni",
+            "customer_phone": "+919877889900",
+            "order_id": "order_demo_revoked_07",
+            "payment_id": "pay_demo_fail_07",
+            "subscription_id": "sub_clevertap_07",
+            "merchant_name": "CleverTap Scale",
+            "amount": 3499.00,
+            "currency": "INR",
+            "error_code": "BAD_REQUEST_ERROR",
+            "error_description": "Recurring e-mandate has been explicitly revoked or cancelled by customer via netbanking portal.",
+            "error_reason": "mandate_revoked_by_customer",
+            "error_source": "customer",
+            "error_step": "payment_authorization",
+            "card_last4": "5555",
+            "card_network": "MasterCard",
+            "issuer_bank": "HDFC",
+            "attempt_count": 1,
+            "ground_truth_cause": CAUSE_MANDATE_LIMIT_EXCEEDED,
+            "detected_at": (base_time + timedelta(minutes=35)).isoformat(),
+            "expected_tier": 3,
+            "expected_outcome": "unrecovered",
+            "simulate_reply": None,
+            "scenario_notes": "Demo #7: Mandate revoked by customer -> Stopping rule MANDATE_REVOKED halts retries immediately to respect customer intent and prevent spam."
+        },
+        {
+            "event_id": "demo_scenario_8_cooldown_enforced",
+            "customer_ref": "cust_demo_siddharth_08",
+            "customer_name": "Siddharth Das",
+            "customer_phone": "+919888990011",
+            "order_id": "order_demo_cooldown_08",
+            "payment_id": "pay_demo_fail_08",
+            "subscription_id": "sub_khatabook_08",
+            "merchant_name": "Khatabook Pro",
+            "amount": 1999.00,
+            "currency": "INR",
+            "error_code": "GATEWAY_ERROR",
+            "error_description": "Bank switch connection dropped during second automated retry attempt.",
+            "error_reason": "gateway_timeout",
+            "error_source": "gateway",
+            "error_step": "payment_authorization",
+            "card_last4": "3333",
+            "card_network": "Visa",
+            "issuer_bank": "ICICI",
+            "attempt_count": 2,
+            "ground_truth_cause": CAUSE_BANK_TIMEOUT,
+            "detected_at": (datetime.utcnow() - timedelta(minutes=15)).isoformat(),
+            "expected_tier": 1,
+            "expected_outcome": "recovered",
+            "simulate_reply": None,
+            "scenario_notes": "Demo #8: Cooldown enforced -> High-frequency retry intercepted; 4-hour cooldown enforces responsible clearing to protect gateway standing."
         }
     ]
 
-def generate_synthetic_batch(total_count: int = 75, inject_duplicates: bool = True) -> List[Dict[str, Any]]:
+def generate_synthetic_batch(total_count: int = 250, inject_duplicates: bool = True) -> List[Dict[str, Any]]:
     """
     Generates realistic, noisy failed-transaction records with:
-    - 5 named seeded scenarios
-    - Realistic probability distribution
-    - Deliberately ambiguous bank failure signals (~20% of batch)
-    - Realistic dunning recovery outcomes (~35-45% net recovery, ~80-85% accuracy)
+    - 8 named seeded scenarios
+    - Scalable enterprise volume (default 250 records, supports up to 1000)
+    - Realistic probability distribution across 6 major Indian banks and SaaS tiers
+    - Deliberately ambiguous bank failure signals (~22% of batch)
+    - Realistic dunning recovery outcomes (~35-45% net recovery, ~78-83% accuracy)
     - Intentional duplicate webhooks to test Idempotency Gate
     """
     seeded_scenarios = get_named_demo_scenarios()
@@ -313,10 +410,10 @@ def generate_synthetic_batch(total_count: int = 75, inject_duplicates: bool = Tr
         [CAUSE_HARD_DECLINE_SUSPECTED_FRAUD] * 4
     )
 
-    amounts = [499.00, 799.00, 999.00, 1499.00, 1999.00, 2499.00, 3999.00, 4999.00, 7999.00, 12500.00]
+    amounts = [499.00, 799.00, 999.00, 1499.00, 1999.00, 2499.00, 3999.00, 4999.00, 7999.00, 12500.00, 18500.00]
 
     for i in range(remaining_count):
-        # 20% probability of an ambiguous/noisy rail signal
+        # 22% probability of an ambiguous/noisy rail signal
         is_noisy = (random.random() < 0.22)
 
         if is_noisy:
@@ -352,9 +449,6 @@ def generate_synthetic_batch(total_count: int = 75, inject_duplicates: bool = Tr
         if cause in [CAUSE_EXPIRED_CARD, CAUSE_MANDATE_LIMIT_EXCEEDED]:
             simulate_reply = True if random.random() < 0.42 else False
 
-        # Realistic Tier 1 bank retry recovery rate (~55% success, ~45% chronic low funds/switch failure)
-        tier1_retry_success = True if random.random() < 0.55 else False
-
         record = {
             "event_id": f"evt_syn_{uuid.uuid4().hex[:10]}",
             "customer_ref": f"cust_{uuid.uuid4().hex[:8]}",
@@ -363,6 +457,7 @@ def generate_synthetic_batch(total_count: int = 75, inject_duplicates: bool = Tr
             "order_id": f"order_{uuid.uuid4().hex[:12]}",
             "payment_id": f"pay_{uuid.uuid4().hex[:12]}",
             "subscription_id": f"sub_{uuid.uuid4().hex[:8]}",
+            "merchant_name": random.choice(MERCHANTS),
             "amount": amount,
             "currency": "INR",
             "error_code": template["error_code"],
@@ -376,15 +471,18 @@ def generate_synthetic_batch(total_count: int = 75, inject_duplicates: bool = Tr
             "attempt_count": attempt,
             "ground_truth_cause": cause,
             "detected_at": detected_time.isoformat(),
+            "expected_tier": 1 if cause in [CAUSE_INSUFFICIENT_FUNDS, CAUSE_BANK_TIMEOUT] else (2 if cause in [CAUSE_EXPIRED_CARD, CAUSE_MANDATE_LIMIT_EXCEEDED] else 3),
+            "expected_outcome": "recovered" if cause != CAUSE_HARD_DECLINE_SUSPECTED_FRAUD and attempt <= 3 else "unrecovered",
             "simulate_reply": simulate_reply,
-            "tier1_retry_success": tier1_retry_success
+            "scenario_notes": f"Synthetic test event ({template['error_reason']})"
         }
         batch.append(record)
 
-    # Inject 1 duplicate webhook event from generic pool to demonstrate Idempotency Gate
-    if inject_duplicates and len(batch) > 10:
-        dup1 = dict(batch[10])
-        dup1["notes"] = "Intentional duplicate webhook retry #1"
-        batch.append(dup1)
+    # Inject 1 duplicate webhook to test Idempotency Gate
+    if inject_duplicates and len(batch) > 5:
+        target_dup = dict(batch[2])
+        target_dup["detected_at"] = (datetime.utcnow() - timedelta(minutes=2)).isoformat()
+        target_dup["event_id"] = f"{target_dup['event_id']}"
+        batch.append(target_dup)
 
     return batch

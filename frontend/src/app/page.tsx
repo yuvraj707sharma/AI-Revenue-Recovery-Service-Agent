@@ -118,12 +118,12 @@ export default function MerchantCockpitPage() {
     }
   };
 
-  const handleRunFullBatch = async () => {
+  const handleRunFullBatch = async (count: number = 75) => {
     setIsProcessing(true);
-    showToast('Ingesting & recovering 75 synthetic subscription failures...');
+    showToast(`Ingesting & recovering ${count} synthetic subscription failures...`);
     try {
-      await runSyntheticBatch(75, true);
-      showToast('75-event batch recovered successfully with idempotency guarantees.');
+      await runSyntheticBatch(count, true);
+      showToast(`${count}-event enterprise batch recovered successfully with idempotency guarantees.`);
       await loadData();
     } catch (err) {
       console.error('Batch generation failed:', err);
