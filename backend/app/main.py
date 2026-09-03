@@ -79,6 +79,18 @@ async def health_check():
         "policy": "zero-click-first"
     }
 
+@app.get("/api/razorpay/status")
+async def get_razorpay_status():
+    """
+    Returns the real-time Razorpay SDK connection status and key mode.
+    """
+    conn_info = razorpay_service.verify_live_connection()
+    return {
+        "success": True,
+        "key_id_masked": f"{settings.RAZORPAY_KEY_ID[:8]}...{settings.RAZORPAY_KEY_ID[-4:]}" if len(settings.RAZORPAY_KEY_ID) > 12 else settings.RAZORPAY_KEY_ID[:8] + "...",
+        "connection": conn_info
+    }
+
 @app.get("/api/settings/policy")
 async def get_merchant_policy():
     return {"success": True, "policy": merchant_policy.dict()}

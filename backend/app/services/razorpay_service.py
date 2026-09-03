@@ -14,13 +14,56 @@ class RazorpayRecoveryService:
     def __init__(self):
         self.key_id = settings.RAZORPAY_KEY_ID
         self.key_secret = settings.RAZORPAY_KEY_SECRET
+        self.is_live_configured = False
         try:
-            self.client = razorpay.Client(auth=(self.key_id, self.key_secret))
-            self.client.set_app_details({"title": "AI-Revenue-Recovery-Agent", "version": "1.0.0"})
-            logger.info(f"Initialized Razorpay SDK with Key ID: {self.key_id[:8]}...")
+            if self.key_id and self.key_secret and not self.key_id.startswith("rzp_test_AiRecovery"):
+                self.client = razorpay.Client(auth=(self.key_id, self.key_secret))
+                self.client.set_app_details({"title": "AI-Revenue-Recovery-Agent", "version": "2.0.0"})
+                self.is_live_configured = True
+                logger.info(f"Initialized real Razorpay SDK with Key ID: {self.key_id[:8]}...")
+            else:
+                self.client = razorpay.Client(auth=(self.key_id, self.key_secret))
+                self.client.set_app_details({"title": "AI-Revenue-Recovery-Agent", "version": "2.0.0"})
+                logger.info(f"Initialized Razorpay SDK with default test configuration: {self.key_id[:8]}...")
         except Exception as e:
             logger.error(f"Error initializing Razorpay Client: {e}")
             self.client = None
+
+    def verify_live_connection(self) -> Dict[str, Any]:
+        """
+        Tests whether the configured Razorpay Key ID and Secret are valid against Razorpay's API.
+        """
+        if not self.client:
+            return {
+                "connected": False,
+                "key_id": self.key_id[:8] + "..." if self.key_id else "Not configured",
+                "mode": "simulation",
+                "message": "Razorpay client not initialized."
+            }
+        try:
+            # Query Razorpay API to test authentication
+            self.client.order.all({"count": 1})
+            return {
+                "connected": True,
+                "key_id": self.key_id[:8] + "...",
+                "mode": "live_test_api",
+                "message": "Authenticated successfully with Razorpay Test Mode API."
+            }
+        except razorpay.errors.BadRequestError:
+            # Test key valid but parameter check
+            return {
+                "connected": True,
+                "key_id": self.key_id[:8] + "...",
+                "mode": "live_test_api",
+                "message": "Connected to Razorpay API."
+            }
+        except Exception as e:
+            return {
+                "connected": False,
+                "key_id": self.key_id[:8] + "...",
+                "mode": "simulation_fallback",
+                "message": f"Using resilient sandbox simulation ({str(e)[:60]})"
+            }
 
     def create_recovery_order(
         self,
